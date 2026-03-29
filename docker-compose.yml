@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kalapak_db
+    environment:
+      POSTGRES_DB: kalapak_db
+      POSTGRES_USER: kalapak_user
+      POSTGRES_PASSWORD: kalapak_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - kalapak_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kalapak_user -d kalapak_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kalapak_api
+    environment:
+      APP_NAME: KalapakAPI
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      APP_KEY: base64:Q02WuFGthJWNjPHgack4PaewUPt0/vJzAXVuhzFENHU=
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: kalapak_db
+      DB_USERNAME: kalapak_user
+      DB_PASSWORD: kalapak_secret
+      SANCTUM_STATEFUL_DOMAINS: localhost:3000,localhost:8080
+      SESSION_DRIVER: cookie
+      CACHE_DRIVER: file
+      QUEUE_CONNECTION: sync
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kalapak_net
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kalapak_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@kalapak.team
+      PGADMIN_DEFAULT_PASSWORD: kalapak@2024
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
+    entrypoint: /bin/sh -c "echo 'postgres:5432:kalapak_db:kalapak_user:kalapak_secret' > /tmp/pgpassfile && chmod 600 /tmp/pgpassfile && /entrypoint.sh"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kalapak_net
+
+volumes:
+  pgdata:
+  pgadmin_data:
+
+networks:
+  kalapak_net:
+    driver: bridge

@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Kalapak DB",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "kalapak_db",
+      "Username": "kalapak_user",
+      "Password": "kalapak_secret",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpassfile"
+    }
+  }
+}
