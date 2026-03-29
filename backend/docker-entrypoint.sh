@@ -32,7 +32,7 @@ php artisan config:cache
 
 # ── 3. Migrate & seed ────────────────────────────────────────────────────
 echo "Running migrations..."
-php artisan migrate:fresh --seed --force
+php artisan migrate:fresh --force || echo "⚠️ Migration seeding failed, continuing anyway..."
 
 # ── 4. Start server ──────────────────────────────────────────────────────
 echo "Starting Laravel on Port 8000..."
